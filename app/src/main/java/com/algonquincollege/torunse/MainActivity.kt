@@ -42,7 +42,6 @@ class MainActivity : ComponentActivity() {
              var value = remember { mutableStateOf(0.0f) }
 
 
-
             if(sensorListener == null) {
                 sensorListener = object : SensorEventListener {
 
