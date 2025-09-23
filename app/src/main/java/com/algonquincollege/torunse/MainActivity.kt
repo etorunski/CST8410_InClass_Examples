@@ -16,10 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.MutableLiveData
 import com.algonquincollege.torunse.ui.theme.MyAndroidLabsTheme
 
 //https://developer.android.com/develop/ui/compose/tooling/iterative-development
@@ -73,10 +73,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DisplayLighting(lightingValue: Float, modifier: Modifier = Modifier) {
 
-    Text(
-        text = "The lighting is: ${lightingValue}",
-        modifier = modifier
-    )
+    Column(modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        ) {
+        Text(
+            text = "The lighting is: ${value.value}",
+            modifier = modifier,
+            fontSize = 20.sp,
+
+            )
+        TextField( value = input.value, onValueChange = {
+            input.value = it  //it is a name for standard parameter
+        } )
+        Icon(painter=painterResource(R.drawable.beach), contentDescription = "a beach")
+        Image(painterResource( R.drawable.beach ),
+            contentDescription = "A picture of ??",
+            modifier=Modifier.fillMaxWidth(0.5f))
+        Button({   } ){
+            Text("Click Me")
+        }
+        Button({   } ){
+            Image(painterResource( R.drawable.beach ),
+                contentDescription = "A picture of ??",
+                modifier=Modifier.fillMaxWidth(0.5f))
+        }
+    }
 }
 
 @Preview(showBackground = true)
