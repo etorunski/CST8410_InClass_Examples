@@ -21,12 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
 import com.algonquincollege.torunse.ui.theme.MyAndroidLabsTheme
 
 //https://developer.android.com/develop/ui/compose/tooling/iterative-development
@@ -52,6 +48,7 @@ class MainActivity : ComponentActivity() {
 }
 @Composable
 fun DisplayText(modifier: Modifier = Modifier) {
+
     var currentValue = remember {mutableStateOf("Hello world") }
 
     Text( text = "Our currentValue is ${currentValue.value}", modifier = modifier  )
@@ -64,3 +61,17 @@ fun GreetingPreview() {
         DisplayText()
     }
 }
+
+/*encryption code:
+val context = LocalContext.current
+val mainKey = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+val sharedPreferences = EncryptedSharedPreferences.create(
+    "MyFileName" ,
+    mainKey,
+    context,
+    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+)
+
+ */
