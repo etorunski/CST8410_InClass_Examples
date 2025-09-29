@@ -37,78 +37,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        var sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-
-        //might return null if not on phone
-        val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
-
-        var sensorListener : SensorEventListener? = null
 
         setContent {
 
-             var value = remember { mutableStateOf(0.0f) }
-
-
-            if(sensorListener == null) {
-                sensorListener = object : SensorEventListener {
-
-                    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-
-                    }
-
-                    override fun onSensorChanged(event: SensorEvent?) {
-                        value.value =
-                            event!!.values[0]   //non-null assertion, array of size 1, or size 3
-                    }
-                }
-                //null
-                sensorManager.registerListener(sensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
-            }
-
             MyAndroidLabsTheme {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    DisplayLighting(value.value,
+                    DisplayText(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
     }
-
 }
-
 @Composable
-fun DisplayLighting(lightingValue: Float, modifier: Modifier = Modifier) {
+fun DisplayText(modifier: Modifier = Modifier) {
+    var currentValue = remember {mutableStateOf("Hello world") }
 
-    Column(modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
-        ) {
-        Text(
-            text = "The lighting is: ${lightingValue}",
-            modifier = modifier,
-            fontSize = 20.sp,
-
-            )
-        Icon(painter=painterResource(R.drawable.beach), contentDescription = "a beach")
-        Image(painterResource( R.drawable.beach ),
-            contentDescription = "A picture of ??",
-            modifier=Modifier.fillMaxWidth(0.5f))
-        Button({   } ){
-            Text("Click Me")
-        }
-        Button({   } ){
-            Image(painterResource( R.drawable.beach ),
-                contentDescription = "A picture of ??",
-                modifier=Modifier.fillMaxWidth(0.5f))
-        }
-    }
+    Text( text = "Our currentValue is ${currentValue.value}", modifier = modifier  )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     MyAndroidLabsTheme {
-        DisplayLighting(45.6f)
+        DisplayText()
     }
 }
