@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.security.crypto)
 
     implementation(libs.androidx.core.ktx)
