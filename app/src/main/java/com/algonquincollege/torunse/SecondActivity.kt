@@ -2,6 +2,7 @@ package com.algonquincollege.torunse
 
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -49,6 +50,19 @@ class SecondActivity : ComponentActivity() {
 @Composable
 fun SecondPageContent( m: Modifier = Modifier) {
     val context = LocalActivity.current //this page
+
+
+    var email = ""
+
+    //get the data from the intent that launched this activity:
+    val data: Uri? = context?.intent?.data
+
+    if(data != null)
+    {
+        email = data.getQueryParameter("email") ?: "Unknown"
+    }
+
+
     Column(
         modifier = m.fillMaxSize(),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally ) {
