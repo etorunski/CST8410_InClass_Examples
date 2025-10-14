@@ -28,8 +28,39 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.algonquincollege.torunse.ui.theme.MyAndroidLabsTheme
+import kotlinx.serialization.Serializable
+import io.ktor.client.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
+
+
+@Serializable
+data class LoginRequest(
+    @SerialName("loginName")
+var loginName: String?,
+@SerialName("password")
+var password: String?
+)
+
 
 //https://developer.android.com/develop/ui/compose/tooling/iterative-development
+
+
+
+
+
+
 
 
 class MainActivity : ComponentActivity() {
@@ -37,37 +68,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        var sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        //might return null if not on phone
-        val lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
 
-        var sensorListener : SensorEventListener? = null
 
         setContent {
 
-             var value = remember { mutableStateOf(0.0f) }
-
-
-            if(sensorListener == null) {
-                sensorListener = object : SensorEventListener {
-
-                    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-
-                    }
-
-                    override fun onSensorChanged(event: SensorEvent?) {
-                        value.value =
-                            event!!.values[0]   //non-null assertion, array of size 1, or size 3
-                    }
-                }
-                //null
-                sensorManager.registerListener(sensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
-            }
-
             MyAndroidLabsTheme {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
-                    DisplayLighting(value.value,
+                    DisplayLighting(3.5f,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -80,27 +88,39 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DisplayLighting(lightingValue: Float, modifier: Modifier = Modifier) {
 
-    Column(modifier = Modifier.fillMaxWidth(),
+    val client = HttpClient(Android){
+        install(ContentNegotiation) {
+            json()
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize(1.0f),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
         ) {
-        Text(
-            text = "The lighting is: ${lightingValue}",
-            modifier = modifier,
-            fontSize = 20.sp,
+        Button({
+            CoroutineScope(Dispatchers.IO).launch {
+                //Do you stuff here in a background thread.
+                try {
+                val response: HttpResponse = client.post("http://10.0.2.2:8080/firstTest")
+                {
 
-            )
-        Icon(painter=painterResource(R.drawable.beach), contentDescription = "a beach")
-        Image(painterResource( R.drawable.beach ),
-            contentDescription = "A picture of ??",
-            modifier=Modifier.fillMaxWidth(0.5f))
-        Button({   } ){
-            Text("Click Me")
+                        contentType(ContentType.Application.Json)
+                        val login = LoginRequest("Jet", "Brains")
+                        setBody(login) //automatically serialize to JSON
+
+                }
+                    val ans = response.bodyAsText()
+                println(response.status)
+                }catch(e: Exception){
+            e.message
         }
-        Button({   } ){
-            Image(painterResource( R.drawable.beach ),
-                contentDescription = "A picture of ??",
-                modifier=Modifier.fillMaxWidth(0.5f))
+
+            }
+
+
+        } ){
+            Text("Login")
         }
     }
 }
