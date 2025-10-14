@@ -2,9 +2,13 @@ package com.algonquincollege.torunse
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
 import android.bluetooth.BluetoothGattServerCallback
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -58,7 +62,37 @@ class MainActivity : ComponentActivity() {
             bluetoothAdapter = bluetoothManager?.getAdapter()
         }
 
-        val gattCallbacks = object: BluetoothGattServerCallback() { } //We will implement the inherited functions one at a time and understand what each one does
+        val gattCallbacks = object: BluetoothGattServerCallback() {
+
+            override fun onConnectionStateChange(
+                device: BluetoothDevice?,
+                status: Int,
+                newState: Int
+            ) {
+                super.onConnectionStateChange(device, status, newState)
+                when(newState)
+                {
+                    BluetoothGatt.STATE_CONNECTED -> {Log.d(TAG, "Connected to $device")}
+                    BluetoothGatt.STATE_DISCONNECTED -> {Log.d(TAG, "Disconnected from $device")}
+                }
+            }
+
+            override fun onServiceAdded(
+                status: Int,
+                service: BluetoothGattService?
+            ) {
+                super.onServiceAdded(status, service)
+                if(status == BluetoothGatt.GATT_SUCCESS)
+                {
+                    //add your characteristics:
+                    val colorCharacteristic = BluetoothGattCharacteristic()
+
+                    service?.addCharacteristic(colorCharacteristic)
+                }
+                else
+                    Log.d(TAG, "onServiceAdded failed with status: $status")
+            }
+        } //We will implement the inherited functions one at a time and understand what each one does
         val bluetoothLeAdvertiser = bluetoothAdapter?.getBluetoothLeAdvertiser()
 
         val requestPermissionLauncher =
@@ -67,8 +101,12 @@ class MainActivity : ComponentActivity() {
                 if (isGranted.values.all { it  == true}) {
                     gattServer = bluetoothManager?.openGattServer(this, gattCallbacks )
 
+                    val serviceUUID = UUID.randomUUID()
+                    val service = BluetoothGattService(serviceUUID,
+                        BluetoothGattService.SERVICE_TYPE_PRIMARY )
+                    gattServer?.addService(service) //this will call onServiceAdded() callback
 
-                    val settings =  AdvertiseSettings.Builder()
+                        val settings =  AdvertiseSettings.Builder()
                         .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                         .setTxPowerLevel(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                         .setConnectable(true)
@@ -87,7 +125,6 @@ class MainActivity : ComponentActivity() {
 
                         override fun onStartFailure(errorCode: Int) {
                             super.onStartFailure(errorCode)
-                            if(errorCode == ADVERTISE_FAILED_INTERNAL_ERROR)
                             Log.e(TAG, "Advertising failed with error code $errorCode")
                         }
                     }
