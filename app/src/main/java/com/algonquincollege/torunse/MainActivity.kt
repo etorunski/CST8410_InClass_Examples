@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
                 super.onConnectionStateChange(d, status, newState)
                 when(newState)
                 {
+
                     BluetoothGatt.STATE_CONNECTED -> {
                         device = d
                         Log.d(TAG, "Connected to $d")
