@@ -42,6 +42,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.algonquincollege.torunse.ui.theme.MyAndroidLabsTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 //https://developer.android.com/develop/ui/compose/tooling/iterative-development
@@ -49,6 +52,7 @@ import java.util.UUID
 
 class MainActivity : ComponentActivity() {
 
+    private var device : BluetoothDevice? = null
     private var bluetoothManager:BluetoothManager? = null
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var gattServer : BluetoothGattServer? = null
@@ -65,15 +69,53 @@ class MainActivity : ComponentActivity() {
         val gattCallbacks = object: BluetoothGattServerCallback() {
 
             override fun onConnectionStateChange(
-                device: BluetoothDevice?,
+                d: BluetoothDevice?,
                 status: Int,
                 newState: Int
             ) {
-                super.onConnectionStateChange(device, status, newState)
+                super.onConnectionStateChange(d, status, newState)
                 when(newState)
                 {
-                    BluetoothGatt.STATE_CONNECTED -> {Log.d(TAG, "Connected to $device")}
-                    BluetoothGatt.STATE_DISCONNECTED -> {Log.d(TAG, "Disconnected from $device")}
+                    BluetoothGatt.STATE_CONNECTED -> {
+                        device = d
+                        Log.d(TAG, "Connected to $d")
+
+                    }
+                    BluetoothGatt.STATE_DISCONNECTED -> {
+                        device = null
+                        Log.d(TAG, "Disconnected from $d")}
+                }
+            }
+
+            override fun onCharacteristicWriteRequest(
+                d: BluetoothDevice?,
+                requestId: Int,
+                characteristic: BluetoothGattCharacteristic?,
+                preparedWrite: Boolean,
+                responseNeeded: Boolean,
+                offset: Int,
+                value: ByteArray?
+            ) {
+                super.onCharacteristicWriteRequest(
+                    d,
+                    requestId,
+                    characteristic,
+                    preparedWrite,
+                    responseNeeded,
+                    offset,
+                    value
+                )
+                val str = String(value!!)
+                Log.d(TAG, "write request: ${str}")
+                if(responseNeeded)
+                    gattServer?.sendResponse(d, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+
+
+                CoroutineScope(Dispatchers.IO).launch {
+
+                    Thread.sleep(3000)
+                    characteristic?.setValue("Got your message")
+                    gattServer?.notifyCharacteristicChanged(device, characteristic, true)
                 }
             }
 
@@ -84,10 +126,7 @@ class MainActivity : ComponentActivity() {
                 super.onServiceAdded(status, service)
                 if(status == BluetoothGatt.GATT_SUCCESS)
                 {
-                    //add your characteristics:
-                    val colorCharacteristic = BluetoothGattCharacteristic()
-
-                    service?.addCharacteristic(colorCharacteristic)
+                    Log.d(TAG, "onServiceAdded success")
                 }
                 else
                     Log.d(TAG, "onServiceAdded failed with status: $status")
@@ -101,9 +140,18 @@ class MainActivity : ComponentActivity() {
                 if (isGranted.values.all { it  == true}) {
                     gattServer = bluetoothManager?.openGattServer(this, gattCallbacks )
 
-                    val serviceUUID = UUID.randomUUID()
+                    val serviceUUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
                     val service = BluetoothGattService(serviceUUID,
                         BluetoothGattService.SERVICE_TYPE_PRIMARY )
+
+                    val colorCharacteristic =
+                        BluetoothGattCharacteristic(serviceUUID,
+                            BluetoothGattCharacteristic.PROPERTY_NOTIFY or
+                                    BluetoothGattCharacteristic.PROPERTY_READ or BluetoothGattCharacteristic.PROPERTY_WRITE,
+                            BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE)
+                    colorCharacteristic.setValue("Hello world!".toByteArray(Charsets.UTF_8))
+                    service?.addCharacteristic(colorCharacteristic)
+
                     gattServer?.addService(service) //this will call onServiceAdded() callback
 
                         val settings =  AdvertiseSettings.Builder()
