@@ -75,8 +75,10 @@ class MainActivity : ComponentActivity() {
         ///////// end of step 1
 
 
+        //This is an object that implements the various functions that are called during a bluetooth connection session:
         val gattCallbacks = object: BluetoothGattServerCallback() {
 
+            //Step 7, a device is trying to connect, or is disconnecting:
             override fun onConnectionStateChange(
                 d: BluetoothDevice?,
                 status: Int,
@@ -96,7 +98,11 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Disconnected from $d")}
                 }
             }
+            /////////////// end of Step 7
 
+
+
+            //step 12a:
             override fun onCharacteristicWriteRequest(
                 d: BluetoothDevice?,
                 requestId: Int,
@@ -115,18 +121,37 @@ class MainActivity : ComponentActivity() {
                     offset,
                     value
                 )
+                //get the new value from the client:
                 val str = String(value!!)
+                //write the new value to the characteristic:
+                characteristic?.setValue(str)
+
                 Log.d(TAG, "write request: ${str}")
+                //if the server needs to acknowledge the request:
                 if(responseNeeded)
                     gattServer?.sendResponse(d, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
 
+                ///////////// end of step 12
 
+
+                //step 13, if the server wants to change the value, do it and then notify clients of the change
                 CoroutineScope(Dispatchers.IO).launch {
-
                     Thread.sleep(3000)
+                    //set the server's characteristic value
                     characteristic?.setValue("Got your message")
+
+
+
+
+
+                    //notify clients of the change
                     gattServer?.notifyCharacteristicChanged(device, characteristic, true)
+
+                    //Step 14a:
+                    //     gattServer?.cancelConnection(device)
+                    //end of 14a
                 }
+                ////////////// end of step 13
             }
 
             override fun onServiceAdded(
@@ -155,17 +180,20 @@ class MainActivity : ComponentActivity() {
                     gattServer = bluetoothManager?.openGattServer(this, gattCallbacks )
                     ///////////// end of step 2
 
+
+                    //Step 10:
                     val serviceUUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
                     val service = BluetoothGattService(serviceUUID,
                         BluetoothGattService.SERVICE_TYPE_PRIMARY )
 
-                    val colorCharacteristic =
+                    val myCharacteristic =
                         BluetoothGattCharacteristic(serviceUUID,
                             BluetoothGattCharacteristic.PROPERTY_NOTIFY or
                                     BluetoothGattCharacteristic.PROPERTY_READ or BluetoothGattCharacteristic.PROPERTY_WRITE,
                             BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE)
-                    colorCharacteristic.setValue("Hello world!".toByteArray(Charsets.UTF_8))
-                    service?.addCharacteristic(colorCharacteristic)
+                    myCharacteristic.setValue("Hello world!".toByteArray(Charsets.UTF_8))
+                    service?.addCharacteristic(myCharacteristic)
+                    ///////////////// end of Step 10
 
                     gattServer?.addService(service) //this will call onServiceAdded() callback
 
