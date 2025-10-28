@@ -53,18 +53,27 @@ import java.util.UUID
 class MainActivity : ComponentActivity() {
 
     private var device : BluetoothDevice? = null
+
+    /////////// Step 1
     private var bluetoothManager:BluetoothManager? = null
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var gattServer : BluetoothGattServer? = null
+    ////////////// End of Step 1
+
     private val TAG = "MainActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        //  Step 1
         bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         if(bluetoothManager != null){
             bluetoothAdapter = bluetoothManager?.getAdapter()
         }
+
+        ///////// end of step 1
+
 
         val gattCallbacks = object: BluetoothGattServerCallback() {
 
@@ -135,11 +144,16 @@ class MainActivity : ComponentActivity() {
         } //We will implement the inherited functions one at a time and understand what each one does
         val bluetoothLeAdvertiser = bluetoothAdapter?.getBluetoothLeAdvertiser()
 
+
+        // Step 2a
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
                     isGranted ->
                 if (isGranted.values.all { it  == true}) {
+
+                    // Step 2
                     gattServer = bluetoothManager?.openGattServer(this, gattCallbacks )
+                    ///////////// end of step 2
 
                     val serviceUUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
                     val service = BluetoothGattService(serviceUUID,
@@ -155,7 +169,8 @@ class MainActivity : ComponentActivity() {
 
                     gattServer?.addService(service) //this will call onServiceAdded() callback
 
-                        val settings =  AdvertiseSettings.Builder()
+                    // Step 3
+                    val settings =  AdvertiseSettings.Builder()
                         .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                         .setTxPowerLevel(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                         .setConnectable(true)
@@ -179,7 +194,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     bluetoothLeAdvertiser?.startAdvertising(settings, advertisingData, advertiseCallback);
-
+                    //////// end of step 3
                 } else {
                     val i = 0
                     // Explain to the user that the feature is unavailable because the
@@ -204,6 +219,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        //Step 2a
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) //31 or more
         {
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE))
@@ -212,7 +229,7 @@ class MainActivity : ComponentActivity() {
         {
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH))
         }
-
+        ///////////////// end of step 2a
     }
 
 }
