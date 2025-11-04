@@ -75,12 +75,13 @@ class MainActivity : ComponentActivity() {
 data class ShoppingItem(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    var id:Int,
+    var id:Int = 0,
+
     @ColumnInfo(name = "name")
-    var name:String ,
+    var name:String = "",
 
     @ColumnInfo(name = "sel")
-    var sel:Boolean)
+    var sel:Boolean = false)
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
