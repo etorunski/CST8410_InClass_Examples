@@ -5,11 +5,12 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 
+
 @Dao
 interface ItemDAO {
 
     @Insert
-    fun insertMessage(message:ShoppingItem) :Int
+    fun insertMessage(message:ShoppingItem) :Long
 
     @Delete
     fun deleteMessage(message:ShoppingItem):Int

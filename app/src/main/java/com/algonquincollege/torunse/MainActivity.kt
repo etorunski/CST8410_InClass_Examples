@@ -111,7 +111,7 @@ fun ListItems( mod: Modifier = Modifier) {
                             value = newItem.value,
                             onValueChange = { newStr -> newItem.value = newStr })
                         Button(onClick = {
-                            var newShopItem = ShoppingItem(newItem.value, false)
+                            var newShopItem = ShoppingItem(0,newItem.value, false)
 
                             //since this is a mutableStateList variable, this will cause a recomposition:
                             items.add(newShopItem);
@@ -135,7 +135,7 @@ fun ListItems( mod: Modifier = Modifier) {
                                 Checkbox(
                                     checked = items[rowNum].sel,
                                     onCheckedChange = { newVal ->
-                                        items[rowNum] = ShoppingItem(items[rowNum].name, newVal)
+                                        items[rowNum] = ShoppingItem(0, items[rowNum].name, newVal)
                                     })
                             }
                         }
