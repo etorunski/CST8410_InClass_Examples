@@ -1,7 +1,5 @@
 package com.algonquincollege.torunse
 
-
-import android.content.ClipData
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -16,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Scaffold
@@ -26,23 +25,40 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Room
 import com.algonquincollege.torunse.ui.theme.MyAndroidLabsTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 //https://developer.android.com/develop/ui/compose/tooling/iterative-development
 
 
 class MainActivity : ComponentActivity() {
+
+    var itemsList = MutableLiveData<ShoppingItem>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +71,8 @@ class MainActivity : ComponentActivity() {
         //retrieve the DAO:
         val mDAO = db.getMyDAO()
 
+        val myViewModel = ItemsViewModel(mDAO)
+
 
         setContent {
 
@@ -62,13 +80,37 @@ class MainActivity : ComponentActivity() {
             MyAndroidLabsTheme {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
                     ListItems(
-                        mod = Modifier.padding(innerPadding)
+                        mod = Modifier.padding(innerPadding),
+                        myViewModel
+
                     )
                 }
             }
         }
     }
 
+}
+
+
+class ItemsViewModel(val yourDao: ItemDAO) : ViewModel() {
+    val allEntities = yourDao.getAllItems()
+    fun addItem(itm: ShoppingItem) {
+        viewModelScope.launch {
+            yourDao.insertMessage(itm)
+        }
+    }
+
+    suspend fun deleteItem(itm: ShoppingItem) {
+
+            yourDao.deleteMessage(itm)
+
+    }
+
+    suspend fun updateItem(itm: ShoppingItem) {
+        viewModelScope.launch {
+            yourDao.updateMessage(itm)
+        }
+    }
 }
 
 @Entity(tableName="Items")
@@ -85,13 +127,15 @@ data class ShoppingItem(
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun ListItems( mod: Modifier = Modifier) {
+fun ListItems( mod: Modifier = Modifier, viewModel: ItemsViewModel ) {
 
     var selectedItem = rememberSaveable { mutableStateOf<ShoppingItem?>(null) }
 
     var newItem = rememberSaveable { mutableStateOf("")}
 
-    val items =  remember{ mutableStateListOf<ShoppingItem>()  }
+
+    val shoppingItems by viewModel.allEntities.collectAsState(initial = emptyList())
+
 
      val widthSizeClass = calculateWindowSizeClass(LocalActivity.current!!)
     val isTablet = widthSizeClass.widthSizeClass  == WindowWidthSizeClass.Expanded
@@ -113,8 +157,16 @@ fun ListItems( mod: Modifier = Modifier) {
                         Button(onClick = {
                             var newShopItem = ShoppingItem(0,newItem.value, false)
 
-                            //since this is a mutableStateList variable, this will cause a recomposition:
-                            items.add(newShopItem);
+
+                            //launch on an I/O background thread:
+                            CoroutineScope(Dispatchers.IO).launch{
+
+                                val id = viewModel.yourDao.insertMessage (newShopItem)
+                                id?.let{
+                                    newShopItem.id = it.toInt()
+                                }
+
+                            }
                             newItem.value = ""
                         }) {
                             Text("Add item")
@@ -123,19 +175,23 @@ fun ListItems( mod: Modifier = Modifier) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(items.size) { rowNum ->
+                        itemsIndexed(shoppingItems) { rowNum, entity ->
                             Row(
                                 modifier = Modifier.fillMaxWidth()
-                                    .clickable(onClick = { selectedItem.value = items[rowNum] }),
+                                    .clickable(onClick = { selectedItem.value = entity }),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             )
                             {
-                                Text(text = "Item: ${items[rowNum].name}")
+                                Text(text = "Item: ${entity.name}")
                                 Checkbox(
-                                    checked = items[rowNum].sel,
+                                    checked = entity.sel,
                                     onCheckedChange = { newVal ->
-                                        items[rowNum] = ShoppingItem(0, items[rowNum].name, newVal)
+                                        entity.sel = newVal
+
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            viewModel.updateItem(entity)
+                                        }
                                     })
                             }
                         }
@@ -173,7 +229,13 @@ fun ListItems( mod: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
+    //get the database:
+    val db = Room.databaseBuilder(LocalContext.current, ItemDatabase::class.java, "TheFilename.db").build()
+    //retrieve the DAO:
+    val mDAO = db.getMyDAO()
+
+    val myVM = ItemsViewModel(mDAO)
     MyAndroidLabsTheme {
-        ListItems()
+        ListItems(mod=Modifier.padding(5.dp), viewModel = myVM)
     }
 }
