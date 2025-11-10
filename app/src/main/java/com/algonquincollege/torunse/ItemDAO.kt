@@ -9,10 +9,10 @@ import androidx.room.Query
 interface ItemDAO {
 
     @Insert
-    fun insertMessage(message:ShoppingItem) :Long
+    fun insertMessage(message:ShoppingItem) :Int
 
     @Delete
-    fun deleteMessage(message:ShoppingItem):Long
+    fun deleteMessage(message:ShoppingItem):Int
 
     @Query("Select * from Items")
     fun getAllItems():List<ShoppingItem>
