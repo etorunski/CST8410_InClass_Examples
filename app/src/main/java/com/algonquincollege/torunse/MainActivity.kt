@@ -117,7 +117,7 @@ fun ListItems( mod: Modifier = Modifier, theDAO: ItemDAO ) {
         CoroutineScope(Dispatchers.IO).launch{
             if(shoppingItems.isEmpty())
             {
-                val itms =  theDAO.getAllItems()
+                val itms =  theDAO.getAllItems() //list
                 shoppingItems.clear()
                 shoppingItems.addAll(itms)
             }
@@ -144,13 +144,16 @@ fun ListItems( mod: Modifier = Modifier, theDAO: ItemDAO ) {
                             onValueChange = { newStr -> newItem.value = newStr },
                             modifier = Modifier.testTag("Input")
                             )
-                        Button(onClick = {
+                        Button(onClick = {        //0 for autogenerate
                             var newShopItem = ShoppingItem(0,newItem.value, false)
 
+                            shoppingItems.add(newShopItem)
 
                             //launch on an I/O background thread:
+
                             CoroutineScope(Dispatchers.IO).launch{
 
+                                //insert into database:
                                 val id = theDAO.insertMessage (newShopItem)
                                 id?.let{
                                     newShopItem.id = it.toInt()
