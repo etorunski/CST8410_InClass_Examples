@@ -181,6 +181,7 @@ class MainActivity : ComponentActivity() {
                     ///////////// end of step 2
 
 
+                                        //to show a String UUID: ParcelUuid(UUID.randomUUID()).toString()
                     //Step 10:
                     val serviceUUID = UUID.fromString("0000180D-0000-1000-8000-00805F9B34FB")
                     val service = BluetoothGattService(serviceUUID,
@@ -248,7 +249,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        //Step 2a
+        //Step 2a  //not waiting for a button click the way this is written
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) //31 or more
         {
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE))
