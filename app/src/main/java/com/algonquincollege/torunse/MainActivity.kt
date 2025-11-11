@@ -34,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleOwner
@@ -71,9 +72,6 @@ class MainActivity : ComponentActivity() {
         //retrieve the DAO:
         val mDAO = db.getMyDAO()
 
-        val myViewModel = ItemsViewModel(mDAO)
-
-
         setContent {
 
             var value = remember { mutableStateOf(0.0f) }
@@ -81,7 +79,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
                     ListItems(
                         mod = Modifier.padding(innerPadding),
-                        myViewModel
+                        mDAO
 
                     )
                 }
@@ -91,27 +89,6 @@ class MainActivity : ComponentActivity() {
 
 }
 
-
-class ItemsViewModel(val yourDao: ItemDAO) : ViewModel() {
-    val allEntities = yourDao.getAllItems()
-    fun addItem(itm: ShoppingItem) {
-        viewModelScope.launch {
-            yourDao.insertMessage(itm)
-        }
-    }
-
-    suspend fun deleteItem(itm: ShoppingItem) {
-
-            yourDao.deleteMessage(itm)
-
-    }
-
-    suspend fun updateItem(itm: ShoppingItem) {
-        viewModelScope.launch {
-            yourDao.updateMessage(itm)
-        }
-    }
-}
 
 @Entity(tableName="Items")
 data class ShoppingItem(
@@ -127,15 +104,26 @@ data class ShoppingItem(
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun ListItems( mod: Modifier = Modifier, viewModel: ItemsViewModel ) {
+fun ListItems( mod: Modifier = Modifier, theDAO: ItemDAO ) {
 
     var selectedItem = rememberSaveable { mutableStateOf<ShoppingItem?>(null) }
 
     var newItem = rememberSaveable { mutableStateOf("")}
 
+    val shoppingItems = rememberSaveable{mutableStateListOf<ShoppingItem>() }
 
-    val shoppingItems by viewModel.allEntities.collectAsState(initial = emptyList())
+    run{ //Need this to be outside of Composable scope
 
+        CoroutineScope(Dispatchers.IO).launch{
+            if(shoppingItems.isEmpty())
+            {
+                val itms =  theDAO.getAllItems()
+                shoppingItems.clear()
+                shoppingItems.addAll(itms)
+            }
+
+        }
+    }
 
      val widthSizeClass = calculateWindowSizeClass(LocalActivity.current!!)
     val isTablet = widthSizeClass.widthSizeClass  == WindowWidthSizeClass.Expanded
@@ -153,7 +141,9 @@ fun ListItems( mod: Modifier = Modifier, viewModel: ItemsViewModel ) {
                     Row {
                         TextField(
                             value = newItem.value,
-                            onValueChange = { newStr -> newItem.value = newStr })
+                            onValueChange = { newStr -> newItem.value = newStr },
+                            modifier = Modifier.testTag("Input")
+                            )
                         Button(onClick = {
                             var newShopItem = ShoppingItem(0,newItem.value, false)
 
@@ -161,14 +151,14 @@ fun ListItems( mod: Modifier = Modifier, viewModel: ItemsViewModel ) {
                             //launch on an I/O background thread:
                             CoroutineScope(Dispatchers.IO).launch{
 
-                                val id = viewModel.yourDao.insertMessage (newShopItem)
+                                val id = theDAO.insertMessage (newShopItem)
                                 id?.let{
                                     newShopItem.id = it.toInt()
                                 }
 
                             }
                             newItem.value = ""
-                        }) {
+                        }, modifier = Modifier.testTag("add")) {
                             Text("Add item")
                         }
                     }
@@ -183,14 +173,16 @@ fun ListItems( mod: Modifier = Modifier, viewModel: ItemsViewModel ) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             )
                             {
-                                Text(text = "Item: ${entity.name}")
+                                Text(text = "Item: ${entity.name}", modifier = Modifier.testTag("item${rowNum}"))
                                 Checkbox(
                                     checked = entity.sel,
                                     onCheckedChange = { newVal ->
+
+                                        shoppingItems[rowNum] = ShoppingItem(entity.id, entity.name, newVal)
                                         entity.sel = newVal
 
                                         CoroutineScope(Dispatchers.IO).launch {
-                                            viewModel.updateItem(entity)
+                                            theDAO.updateMessage(entity)
                                         }
                                     })
                             }
@@ -234,8 +226,8 @@ fun GreetingPreview() {
     //retrieve the DAO:
     val mDAO = db.getMyDAO()
 
-    val myVM = ItemsViewModel(mDAO)
+
     MyAndroidLabsTheme {
-        ListItems(mod=Modifier.padding(5.dp), viewModel = myVM)
+        ListItems(mod=Modifier.padding(5.dp), mDAO)
     }
 }

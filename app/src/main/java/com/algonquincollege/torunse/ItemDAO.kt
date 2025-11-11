@@ -20,6 +20,7 @@ interface ItemDAO {
     @Update
     suspend fun updateMessage(message:ShoppingItem):Int
 
+
     @Query("Select * from Items")
-    fun getAllItems(): Flow<List<ShoppingItem>>
+    fun getAllItems(): List<ShoppingItem>
 }
