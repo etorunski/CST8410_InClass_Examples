@@ -244,13 +244,14 @@ class MainActivity : ComponentActivity() {
                 Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
                     Column(modifier = Modifier.padding(innerPadding)){
                         Button(onClick = {
+                            //create a random UUID and parcel it to a string
                             stringUUID.value = ParcelUuid(UUID.randomUUID()).toString()
 
                         }){ Text("Click Me") }
 
                         if(stringUUID.value.isNotEmpty())
                         {
-                            AsyncImage(model="http://api.qrserver.com/v1/create-qr-code/?data=abcde", contentDescription = "A QR code")
+                            AsyncImage(model="https://api.qrserver.com/v1/create-qr-code/?data=${stringUUID.value}&size=300x300", contentDescription = "A QR code")
                         }
                     }
                 }
