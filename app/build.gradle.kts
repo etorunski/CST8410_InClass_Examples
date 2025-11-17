@@ -8,6 +8,9 @@ android {
     namespace = "com.algonquincollege.torunse"
     compileSdk = 36
 
+    adbOptions {
+        timeOutInMs 600000 // 10 minutes (adjust as needed)
+    }
     defaultConfig {
         applicationId = "com.algonquincollege.torunse"
         minSdk = 27
