@@ -24,5 +24,10 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-    - name:  Run Instrumented Unit Tests
-      run: ./gradlew connectedAndroidTest
+    - name: Run Start Emulator
+      uses: ReactiveCircus/android-emulator-runner@v2
+      with:
+        api-level: 30            # Specify API level of the emulator
+        target: google_apis      # Set target to google_apis
+        arch: x86_64             # Specify architecture
+        script: ./gradlew connectedCheck  # Command to run connected tests
