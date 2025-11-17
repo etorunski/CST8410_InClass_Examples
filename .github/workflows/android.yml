@@ -20,6 +20,8 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Set ADB Install Timeout
+      run: echo "ADB_INSTALL_TIMEOUT=600" >> $GITHUB_ENV # 10 minutes
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
