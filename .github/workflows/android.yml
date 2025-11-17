@@ -25,4 +25,4 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name:  Run Instrumented Unit Tests
-      run: ./gradlew connectedTest
+      run: ./gradlew connectedAndroidTest
