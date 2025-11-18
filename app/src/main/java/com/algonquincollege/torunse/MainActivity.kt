@@ -104,6 +104,17 @@ class MainActivity : ComponentActivity() {
             /////////////// end of Step 7
 
 
+            override fun onCharacteristicReadRequest(
+                device: BluetoothDevice?,
+                requestId: Int,
+                offset: Int,
+                characteristic: BluetoothGattCharacteristic?
+            ) {
+                super.onCharacteristicReadRequest(device, requestId, offset, characteristic)
+
+                //a client is asking for the current value of the charactistic (variable)
+                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic!!.value)
+            }
 
             //step 12a:
             override fun onCharacteristicWriteRequest(
@@ -132,7 +143,7 @@ class MainActivity : ComponentActivity() {
                 Log.d(TAG, "write request: ${str}")
                 //if the server needs to acknowledge the request:
                 if(responseNeeded)
-                    gattServer?.sendResponse(d, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                    gattServer?.sendResponse(d, requestId, BluetoothGatt.GATT_SUCCESS, 0, characteristic!!.value)
 
                 ///////////// end of step 12
 
@@ -141,7 +152,7 @@ class MainActivity : ComponentActivity() {
                 CoroutineScope(Dispatchers.IO).launch {
                     Thread.sleep(3000)
                     //set the server's characteristic value
-                    characteristic?.setValue("Got your message")
+                   characteristic?.setValue("Got your message")
 
 
 
