@@ -261,12 +261,12 @@ class MainActivity : ComponentActivity() {
                         BottomAppBar(
                             modifier = Modifier.fillMaxWidth(),
                             actions = {
-                                TextButton(onClick = { /* do something */ })
+                                TextButton(modifier = Modifier.weight(1.0f), onClick = { /* do something */ })
                                 {
                                     Text(serverString.value)
                                 }
                                 Spacer(modifier = Modifier.weight(1f, true))
-                                TextButton(onClick = { /* do something */ }) {
+                                TextButton(modifier = Modifier.weight(1.0f),onClick = { /* do something */ }) {
                                     Text(clientString.value)
                                 }
                             },
