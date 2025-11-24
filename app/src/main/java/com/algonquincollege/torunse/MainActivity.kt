@@ -29,13 +29,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -249,10 +252,28 @@ class MainActivity : ComponentActivity() {
             }
 
         setContent {
-
+            var serverString = remember{mutableStateOf("Start Server")}
+            var clientString = remember{mutableStateOf("Start Client")}
             var stringUUID = remember{ mutableStateOf("") }
             MyAndroidLabsTheme {
-                Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
+                Scaffold( modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        BottomAppBar(
+                            modifier = Modifier.fillMaxWidth(),
+                            actions = {
+                                TextButton(onClick = { /* do something */ })
+                                {
+                                    Text(serverString.value)
+                                }
+                                Spacer(modifier = Modifier.weight(1f, true))
+                                TextButton(onClick = { /* do something */ }) {
+                                    Text(clientString.value)
+                                }
+                            },
+                        )
+                    },
+
+                    ) { innerPadding ->
                     Column(modifier = Modifier.padding(innerPadding)){
                         Button(onClick = {
                             //create a random UUID and parcel it to a string
