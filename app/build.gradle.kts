@@ -2,6 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    //week 8 database
+    alias(libs.plugins.devtools.ksp)
+
 }
 
 android {
@@ -9,6 +13,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
+
         applicationId = "com.algonquincollege.torunse"
         minSdk = 27
         targetSdk = 36
@@ -40,7 +45,14 @@ android {
 }
 
 dependencies {
+    //week 8 database:
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    ksp(libs.androidx.room.compiler)
+        // end week 8
 
+    implementation(libs.androidx.compose.material3.window.size.class1)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -49,6 +61,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
